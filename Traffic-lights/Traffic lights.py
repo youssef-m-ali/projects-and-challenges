@@ -41,21 +41,17 @@ def mainRoadTraffic():
         sleep(2)
         chainLEDSetColour(sideCarLED,255,255,0)
         chainLEDSetColour(mainPedLED,255,0,0)
-        streetLight()
         
         sleep(2)
         chainLEDSetColour(sideCarLED,255,0,0)
-        streetLight()
         
         sleep(2)
         chainLEDSetColour(mainCarLED,0,255,0)
         chainLEDSetColour(sidePedLED,0,255,0)
-        streetLight()
         
         sleep(2)
         var_side = 0
         var_main = 1
-        streetLight()
         
 
 '''
@@ -71,21 +67,17 @@ def sideRoadTraffic():
         sleep(2)
         chainLEDSetColour(mainCarLED,255,255,0)
         chainLEDSetColour(sidePedLED,255,0,0)
-        streetLight()
         
         sleep(2)
         chainLEDSetColour(mainCarLED,255,0,0)
-        streetLight()
         
         sleep(2)
         chainLEDSetColour(sideCarLED,0,255,0)
         chainLEDSetColour(mainPedLED,0,255,0)
-        streetLight()
         
         sleep(2)
         var_main = 0
         var_side = 1
-        streetLight()
 
 '''
 assumes the Arduino is connected to a properly initiated ultrasonic sensor
@@ -193,17 +185,14 @@ while 1:
             mainSpeaker()
             
             crossers()
-            streetLight()
             
             actions.remove("PM")
           
         elif actions[0] == "PS" :
             
             mainRoadTraffic()
-            sideSpeaker()
             
             crossers()
-            streetLight()
             
             actions.remove ("PS")
            
@@ -215,7 +204,6 @@ while 1:
                 
                 ultrasonic()
                 crossers()
-                streetLight()
                 
                 actions.remove ("CarS")
 
