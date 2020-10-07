@@ -1,5 +1,6 @@
 from grove_library import *
 from time import sleep
+import threading
 
 
 class ChainableLED:
@@ -150,10 +151,8 @@ class Traffic:
 
     def loop(self):
         while 1:
-
-            self.crossers()
-            self.ultrasonic()
             
+            self.ultrasonic()
             
             while len(self.queue) != 0:
                 
@@ -177,3 +176,15 @@ class Traffic:
                 
             self.mainRoadTraffic()
             self.sideSpeaker()
+    
+    def run(self):
+        t1 = threading.Thread(target=self.loop)
+        t2 = threading.Thread(target=self.crossers)
+        t1.start()
+        t2.start()
+
+if __name__ == "__main__":
+    T = Traffic()
+    T.run()
+
+
