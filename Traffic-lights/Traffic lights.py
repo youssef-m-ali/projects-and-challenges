@@ -29,14 +29,14 @@ class Traffic:
         ultraInit(7, connection)
         speakerInit(8, connection)
 
-        self.sidePedLED = ChainableLED(0)
-        self.mainPedLED = ChainableLED(1)
+        self.sidePedestriansLED = ChainableLED(0)
+        self.mainPedestriansLED = ChainableLED(1)
         self.mainCarLED = ChainableLED(2)
         self.sideCarLED = ChainableLED(3)
 
         #Set default values
-        self.sidePedLED.green()
-        self.mainPedLED.red()
+        self.sidePedestriansLED.green()
+        self.mainPedestriansLED.red()
 
         self.mainCarLED.green()
         self.sideCarLED.red()
@@ -57,14 +57,14 @@ class Traffic:
             
             sleep(2)
             self.sideCarLED.yellow()
-            self.mainPedLED.red()
+            self.mainPedestriansLED.red()
             
             sleep(2)
             self.sideCarLED.red()
             
             sleep(2)
             self.mainCarLED.green()
-            self.sidePedLED.green()
+            self.sidePedestriansLED.green()
             
             sleep(2)
             self.mainTrafficOn = 1
@@ -74,21 +74,20 @@ class Traffic:
     assumes Arduino is connected to a properly initiated Chainable LED with at least 2 LEDs
     sets the LEDs to move the traffic in the side road
     '''
-
     def sideRoadTraffic(self):
 
         if self.mainTrafficOn == 1:
             
             sleep(2)
             self.mainCarLED.yellow()
-            self.sidePedLED.red()
+            self.sidePedestriansLED.red()
             
             sleep(2)
             self.mainCarLED.red()
             
             sleep(2)
             self.sideCarLED.green()
-            self.mainPedLED.green()
+            self.mainPedestriansLED.green()
         
             self.mainTrafficOn = 0
 
@@ -96,8 +95,8 @@ class Traffic:
     assumes the Arduino is connected to a properly initiated ultrasonic sensor
     returns the queue updated or not according to the ultrasonic reading
     '''
-        
     def ultrasonic(self):
+
         ultraSensor  = ultraGetDistance()
         if ultraSensor  < 3:
             self.queue.append("CarS")
@@ -107,25 +106,25 @@ class Traffic:
 
     '''
     assumes Arduino is connected to 4 push buttons
-    returns the queue updated or not according to the value of the push buttons
-            eliminates duplicates from the queue
+    updates the queue or not according to the value of the push buttons
+        eliminates duplicates from the queue
     '''    
-
     def crossers(self):
         
         lower = arduinoDigitalRead(4)
         upper = arduinoDigitalRead(3)
         right = arduinoDigitalRead(6)
         left  = arduinoDigitalRead(5)
-        
-        if upper == 1 or lower == 1:
-            self.queue.append("PS")
-            
-        if right == 1 or left == 1:
-            self.queue.append("PM")
-            
-        self.queue = list(dict.fromkeys(self.queue))
-        return self.queue
+        while 1:
+            if upper == 1 or lower == 1:
+                self.queue.append("2 PS")
+                
+            if right == 1 or left == 1:
+                self.queue.append("2 PM")
+                
+            self.queue = list(dict.fromkeys(self.queue))
+
+            sleep(1)
 
 
     '''
@@ -148,7 +147,7 @@ class Traffic:
             speakerPlayNote(150, 1)
             sleep(3)
             
-
+            
     def loop(self):
         while 1:
             
@@ -156,19 +155,19 @@ class Traffic:
             
             while len(self.queue) != 0:
                 
-                if self.queue[0] == "PM" :
+                if self.queue[0] == "1 PM" :
                     
                     self.sideRoadTraffic()
                     self.mainSpeaker()
-                    self.queue.remove("PM")
+                    self.queue.remove("1 PM")
                 
-                elif self.queue[0] == "PS" :
+                elif self.queue[0] == "2 PS" :
                     self.mainRoadTraffic()
-                    self.queue.remove ("PS")
+                    self.queue.remove ("2 PS")
                 
-                elif self.queue[0] == "CarS":
+                elif self.queue[0] == "3 CarS":
                     
-                    while "CarS" in self.queue:
+                    while "3 CarS" in self.queue:
                         self.sideRoadTraffic()
                         self.mainSpeaker()
                         
