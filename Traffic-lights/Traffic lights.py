@@ -1,225 +1,191 @@
-#First we import libraries we might need
-
 from grove_library import *
 from time import sleep
+import threading
 
-#Next we define functions we will call in the script
 
-'''
-assumes Arduino is connected to a properly initiated Chainable LED
-prints the light sensor reading and the level on a scale from 1-4
-sets the LED brightness according to the level
-'''
-def streetLight():
-    lightSensor = arduinoAnalogRead(0)
-    print (lightSensor)
-    if lightSensor <= 300 and lightSensor > 200:
-        chainLEDSetColour(streetLED,40,40,0)
-        print('1')
-
-    elif lightSensor < 200 and lightSensor > 100:
-        chainLEDSetColour(streetLED,80,80,0)
-        print('2')
-
-    elif lightSensor < 100:
-        chainLEDSetColour(streetLED,255,255,0)
-        print('3')
-
-    else:
-        chainLEDSetColour(streetLED,0,0,0)
-        print('4')
-        
-'''
-assumes Arduino is connected to a properly initiated Chainable LED with at least 2 LEDs
-sets the LEDs to move the traffic in the main road
-'''
-def mainRoadTraffic():
-    global var_side
-    global var_main
-    if var_side == 1:
-        
-        sleep(2)
-        chainLEDSetColour(sideCarLED,255,255,0)
-        chainLEDSetColour(mainPedLED,255,0,0)
-        streetLight()
-        
-        sleep(2)
-        chainLEDSetColour(sideCarLED,255,0,0)
-        streetLight()
-        
-        sleep(2)
-        chainLEDSetColour(mainCarLED,0,255,0)
-        chainLEDSetColour(sidePedLED,0,255,0)
-        streetLight()
-        
-        sleep(2)
-        var_side = 0
-        var_main = 1
-        streetLight()
-        
-
-'''
-assumes Arduino is connected to a properly initiated Chainable LED with at least 2 LEDs
-sets the LEDs to move the traffic in the side road
-'''
-
-def sideRoadTraffic():
-    global var_side
-    global var_main
-    if var_main == 1:
-        
-        sleep(2)
-        chainLEDSetColour(mainCarLED,255,255,0)
-        chainLEDSetColour(sidePedLED,255,0,0)
-        streetLight()
-        
-        sleep(2)
-        chainLEDSetColour(mainCarLED,255,0,0)
-        streetLight()
-        
-        sleep(2)
-        chainLEDSetColour(sideCarLED,0,255,0)
-        chainLEDSetColour(mainPedLED,0,255,0)
-        streetLight()
-        
-        sleep(2)
-        var_main = 0
-        var_side = 1
-        streetLight()
-
-'''
-assumes the Arduino is connected to a properly initiated ultrasonic sensor
-returns the queue updated or not according to the ultrasonic reading
-'''
+class ChainableLED:
+   
+    def __init__(self, pin):
+        self.pin = pin
     
-def ultrasonic():
-    ultraSensor  = ultraGetDistance()
-    if ultraSensor  < 3:
-        actions.append("CarS")
-    return actions
-        
-    
+    def red(self):
+        chainLEDSetColour(self.pin, 255, 0, 0)
 
-'''
-assumes Arduino is connected to 4 push buttons
-returns the queue updated or not according to the value of the push buttons
+    def green(self):
+        chainLEDSetColour(self.pin, 0, 255, 0)
+
+    def yellow(self):
+        chainLEDSetColour(self.pin, 255, 255, 0)
+
+
+class Traffic:
+    def __init__(self):
+        
+        # Call function to initialize the Arduino
+        connection = arduinoInit(0)
+
+        # Initialize components that require it
+        chainLEDInit(2, 5, connection)
+        ultraInit(7, connection)
+        speakerInit(8, connection)
+
+        self.sidePedestriansLED = ChainableLED(0)
+        self.mainPedestriansLED = ChainableLED(1)
+        self.mainCarLED = ChainableLED(2)
+        self.sideCarLED = ChainableLED(3)
+
+        #Set default values
+        self.sidePedestriansLED.green()
+        self.mainPedestriansLED.red()
+
+        self.mainCarLED.green()
+        self.sideCarLED.red()
+
+        self.mainTrafficOn = 1
+
+        # Create empty list to form a queue
+        self.queue = []
+
+
+    '''
+    assumes Arduino is connected to a properly initiated Chainable LED with at least 2 LEDs
+    sets the LEDs to move the traffic in the main road
+    '''
+    def mainRoadTraffic(self):
+
+        if self.mainTrafficOn == 0:
+            
+            sleep(2)
+            self.sideCarLED.yellow()
+            self.mainPedestriansLED.red()
+            
+            sleep(2)
+            self.sideCarLED.red()
+            
+            sleep(2)
+            self.mainCarLED.green()
+            self.sidePedestriansLED.green()
+            
+            sleep(2)
+            self.mainTrafficOn = 1
+            
+
+    '''
+    assumes Arduino is connected to a properly initiated Chainable LED with at least 2 LEDs
+    sets the LEDs to move the traffic in the side road
+    '''
+    def sideRoadTraffic(self):
+
+        if self.mainTrafficOn == 1:
+            
+            sleep(2)
+            self.mainCarLED.yellow()
+            self.sidePedestriansLED.red()
+            
+            sleep(2)
+            self.mainCarLED.red()
+            
+            sleep(2)
+            self.sideCarLED.green()
+            self.mainPedestriansLED.green()
+        
+            self.mainTrafficOn = 0
+
+    '''
+    assumes the Arduino is connected to a properly initiated ultrasonic sensor
+    returns the queue updated or not according to the ultrasonic reading
+    '''
+    def ultrasonic(self):
+
+        ultraSensor  = ultraGetDistance()
+        if ultraSensor  < 3:
+            self.queue.append("3 side car")
+        return self.queue
+            
+        
+
+    '''
+    assumes Arduino is connected to 4 push buttons
+    updates the queue or not according to the value of the push buttons
         eliminates duplicates from the queue
-'''    
-
-def crossers():
-    
-    lower = arduinoDigitalRead(4)
-    upper = arduinoDigitalRead(3)
-    right = arduinoDigitalRead(6)
-    left  = arduinoDigitalRead(5)
-    
-    if upper == 1 or lower == 1:
-        actions.append("PS")
+    '''    
+    def crossers(self):
         
-    if right == 1 or left == 1:
-        actions.append("PM")
+        lower = arduinoDigitalRead(4)
+        upper = arduinoDigitalRead(3)
+        right = arduinoDigitalRead(6)
+        left  = arduinoDigitalRead(5)
         
-    actions = list(dict.fromkeys(actions))
-    return actions
-
-
-'''
-assumes Arduino is connected to a properly initialized speaker
-plays a high note on a slow pattern
-'''  
-def mainSpeaker ():
-    
-    for i in range(3):
-        speakerPlayNote(350, 1)
-        sleep(3)
-
-'''
-assumes Arduino is connected to a properly initialized speaker
-plays a low note on a quick pattern
-'''  
-def sideSpeaker ():
-    
-    for i in range(3):
-        speakerPlayNote(150, 1)
-        sleep(2)
-        
-
-#Now we have the script that will run#       
-    
-
-
-# Call function to initialize the Arduino
-connection = arduinoInit(0)
-
-# Initialize components that require it
-chainLEDInit(2, 5, connection)
-ultraInit(7, connection)
-speakerInit(8, connection)
-
-#Replace literal values with index values for chainable LEDs
-sidePedLED = 0
-mainPedLED = 1
-mainCarLED = 2
-sideCarLED = 3
-streetLED = 4
-
-#Set default values
-chainLEDSetColour(sidePedLED,0,255,0)
-chainLEDSetColour(mainPedLED,255,0,0)
-chainLEDSetColour(2,0,255,0)
-chainLEDSetColour(3,255,0,0)
-
-var_side = 0
-var_main = 1
-
-# Create empty list to form a queue
-actions = []
-
-
-while 1:
-
-
-    
-    streetLight()
-    crossers()
-    ultrasonic()
-    
-    
-    while len(actions) != 0:
-        
-        if actions[0] == "PM" :
-            
-            sideRoadTraffic()
-            mainSpeaker()
-            
-            crossers()
-            streetLight()
-            
-            actions.remove("PM")
-          
-        elif actions[0] == "PS" :
-            
-            mainRoadTraffic()
-            sideSpeaker()
-            
-            crossers()
-            streetLight()
-            
-            actions.remove ("PS")
-           
-        elif actions[0] == "CarS":
-            
-            while "CarS" in actions:
-                sideRoadTraffic()
-                mainSpeaker()
+        while 1:
+            if upper == 1 or lower == 1:
+                self.queue.append("2 side pedestrian")
                 
-                ultrasonic()
-                crossers()
-                streetLight()
+            if right == 1 or left == 1:
+                self.queue.append("1 main pedestrian")
                 
-                actions.remove ("CarS")
+            self.queue = list(dict.fromkeys(self.queue))
 
-    if len(actions) == 0:
+            sleep(1)
+
+
+    '''
+    assumes Arduino is connected to a properly initialized speaker
+    plays a high note on a quick pattern
+    '''  
+    def mainSpeaker(self):
         
-            mainRoadTraffic()
-            sideSpeaker()
+        for _ in range(3):
+            speakerPlayNote(350, 1)
+            sleep(2)
+
+    '''
+    assumes Arduino is connected to a properly initialized speaker
+    plays a low note on a slow pattern
+    '''  
+    def sideSpeaker(self):
+        
+        for _ in range(3):
+            speakerPlayNote(150, 1)
+            sleep(3)
+            
+
+    def loop(self):
+        while 1:
+            
+            self.ultrasonic()
+            
+            while len(self.queue) != 0:
+                
+                if self.queue[0] == "1 main pedestrian" :
+                    
+                    self.sideRoadTraffic()
+                    self.mainSpeaker()
+                    self.queue.remove("1 main pedestrian")
+                
+                elif self.queue[0] == "2 side pedestrian" :
+                    self.mainRoadTraffic()
+                    self.queue.remove("2 side pedestrian")
+                
+                elif self.queue[0] == "3 side car":
+                    
+                    while "3 side car" in self.queue:
+                        self.sideRoadTraffic()
+                        self.mainSpeaker()
+                        
+                        self.queue.remove("3 side car")
+                        self.ultrasonic()
+
+            self.mainRoadTraffic()
+            self.sideSpeaker()
+    
+    def run(self):
+        t1 = threading.Thread(target=self.loop)
+        t2 = threading.Thread(target=self.crossers)
+        t1.start()
+        t2.start()
+
+if __name__ == "__main__":
+    T = Traffic()
+    T.run()
+
+
