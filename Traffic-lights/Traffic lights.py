@@ -99,7 +99,7 @@ class Traffic:
 
         ultraSensor  = ultraGetDistance()
         if ultraSensor  < 3:
-            self.queue.append("CarS")
+            self.queue.append("3 side car")
         return self.queue
             
         
@@ -115,12 +115,13 @@ class Traffic:
         upper = arduinoDigitalRead(3)
         right = arduinoDigitalRead(6)
         left  = arduinoDigitalRead(5)
+        
         while 1:
             if upper == 1 or lower == 1:
-                self.queue.append("2 PS")
+                self.queue.append("2 side pedestrian")
                 
             if right == 1 or left == 1:
-                self.queue.append("2 PM")
+                self.queue.append("1 main pedestrian")
                 
             self.queue = list(dict.fromkeys(self.queue))
 
@@ -147,7 +148,7 @@ class Traffic:
             speakerPlayNote(150, 1)
             sleep(3)
             
-            
+
     def loop(self):
         while 1:
             
@@ -155,24 +156,25 @@ class Traffic:
             
             while len(self.queue) != 0:
                 
-                if self.queue[0] == "1 PM" :
+                if self.queue[0] == "1 main pedestrian" :
                     
                     self.sideRoadTraffic()
                     self.mainSpeaker()
-                    self.queue.remove("1 PM")
+                    self.queue.remove("1 main pedestrian")
                 
-                elif self.queue[0] == "2 PS" :
+                elif self.queue[0] == "2 side pedestrian" :
                     self.mainRoadTraffic()
-                    self.queue.remove ("2 PS")
+                    self.queue.remove("2 side pedestrian")
                 
-                elif self.queue[0] == "3 CarS":
+                elif self.queue[0] == "3 side car":
                     
-                    while "3 CarS" in self.queue:
+                    while "3 side car" in self.queue:
                         self.sideRoadTraffic()
                         self.mainSpeaker()
                         
+                        self.queue.remove("3 side car")
                         self.ultrasonic()
-                
+
             self.mainRoadTraffic()
             self.sideSpeaker()
     
