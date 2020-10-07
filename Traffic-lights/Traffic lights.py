@@ -4,30 +4,6 @@ from grove_library import *
 from time import sleep
 
 #Next we define functions we will call in the script
-
-'''
-assumes Arduino is connected to a properly initiated Chainable LED
-prints the light sensor reading and the level on a scale from 1-4
-sets the LED brightness according to the level
-'''
-def streetLight():
-    lightSensor = arduinoAnalogRead(0)
-    print (lightSensor)
-    if lightSensor <= 300 and lightSensor > 200:
-        chainLEDSetColour(streetLED,40,40,0)
-        print('1')
-
-    elif lightSensor < 200 and lightSensor > 100:
-        chainLEDSetColour(streetLED,80,80,0)
-        print('2')
-
-    elif lightSensor < 100:
-        chainLEDSetColour(streetLED,255,255,0)
-        print('3')
-
-    else:
-        chainLEDSetColour(streetLED,0,0,0)
-        print('4')
         
 '''
 assumes Arduino is connected to a properly initiated Chainable LED with at least 2 LEDs
@@ -139,7 +115,6 @@ def sideSpeaker ():
 #Now we have the script that will run#       
     
 
-
 # Call function to initialize the Arduino
 connection = arduinoInit(0)
 
@@ -153,7 +128,6 @@ sidePedLED = 0
 mainPedLED = 1
 mainCarLED = 2
 sideCarLED = 3
-streetLED = 4
 
 #Set default values
 chainLEDSetColour(sidePedLED,0,255,0)
@@ -170,9 +144,6 @@ actions = []
 
 while 1:
 
-
-    
-    streetLight()
     crossers()
     ultrasonic()
     
@@ -183,17 +154,10 @@ while 1:
             
             sideRoadTraffic()
             mainSpeaker()
-            
-            crossers()
-            
             actions.remove("PM")
           
         elif actions[0] == "PS" :
-            
             mainRoadTraffic()
-            
-            crossers()
-            
             actions.remove ("PS")
            
         elif actions[0] == "CarS":
@@ -203,11 +167,6 @@ while 1:
                 mainSpeaker()
                 
                 ultrasonic()
-                crossers()
-                
-                actions.remove ("CarS")
-
-    if len(actions) == 0:
         
-            mainRoadTraffic()
-            sideSpeaker()
+    mainRoadTraffic()
+    sideSpeaker()
