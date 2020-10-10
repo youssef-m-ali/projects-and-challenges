@@ -1,4 +1,5 @@
 import numpy as np
+import os
 import random
 
 
@@ -131,7 +132,11 @@ class Game2048:
 
     else:
       self.randomAdder()
+      self.clear()
       print(self.gameArr)
+    
+  def clear(self):
+    os.system( 'clear' )
 
 
   def play(self):
